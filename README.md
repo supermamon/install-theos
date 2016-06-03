@@ -37,7 +37,7 @@ chmod +x cygwin.sh
 Available SDKs can be found at https://jbdevs.org/sdks/.
 
 ````bash
-./cygwin.sh --sdks "8.1 9.1"
+./linux.sh --sdks "8.1 9.1"
 ````
 
 *Create a NIC profile*  
@@ -45,12 +45,12 @@ Available SDKs can be found at https://jbdevs.org/sdks/.
 ````bash
 ./cygwin.sh --createnic y --nicusername tweakmaker --nicprefix com.tweakmaker
 # OR
-./cygwin.sh --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
+./linux.sh --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
 ````
 
 *All parameters*
 ````bash
-./cygwin.sh --installdir /var/ --sdks "8.1 9.3" --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
+./linux.sh --installdir /var/ --sdks "8.1 9.3" --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
 
 #OR
 
@@ -74,6 +74,5 @@ export THEOS_DEVICE_PORT=22
 ## TODO
 
 * create $THEOS variable
-* Linux script
 * OSX script
 * Unified script
