@@ -54,7 +54,7 @@ Available SDKs can be found at https://jbdevs.org/sdks/.
 
 #OR
 
-./cygwin.sh -d /var/ -s "8.1 9.3" --n y --u "tweakmaker <tm@tweakmaker.net>" --p net.tweakmaker
+./cygwin.sh -d /var/ -s "8.1 9.3" -n y -u "tweakmaker <tm@tweakmaker.net>" -p net.tweakmaker
 
 ````
 
