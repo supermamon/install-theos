@@ -1,4 +1,4 @@
-``bash`` script to install [theos](https://github.com/theos/theos).
+``bash`` script to install [theos](https://github.com/theos/theos). See Supported Systems section for tested operating systems.
 
 ## Arguments
 
@@ -64,6 +64,13 @@ export THEOS=/opt/theos
 export THEOS_DEVICE_IP=<ip of your device>
 export THEOS_DEVICE_PORT=22
 ````
+
+## Supported Systems
+* Windows 7 (Cygwin)
+* Windows 10 (Cygwin)
+* Linux Mint 17.3 "Rosa"
+* Linux Mint 18 "Sara"
+* Ubuntu 14.04.2 LTS
 
 
 ## TODO
