@@ -9,52 +9,47 @@
 |--createnic, -n |Create ~/.nicrc file. Pass *Y* to create. Default is *N*.|--createnic Y|
 |--nicusername, -u|Default username when creating a tweak.|--nicusername tweakmaker <br />OR<br /> --u "tweakmaker &lt;tweakmaker@mycompany.com&gt;"|
 |--nicprefix, -p|Default bundle id prefix.|--nicprefix com.mycompany|
+|--fallback, -f|Include [fallback headers](https://github.com/supermamon/iOS-fallback-headers). Default is N.|--fallback Y|
 
-## Download
+## Download & Run
 
 ````bash
 git clone https://github.com/supermamon/install-theos
 cd install-theos
-````
-## Run
-````bash
-chmod +x <platform>.sh
-./<platform>.sh <args>
+chmod +x install.sh
+./install.sh <args>
 
-# Example:
-chmod +x cygwin.sh
-./cygwin.sh
 ````
 
 ## Examples
 
 *Custom install directory*
 ````bash
-./cygwin.sh --installdir /var/
+./install.sh --installdir /var/
 ````
 
 *Custom SDKS*  
 Available SDKs can be found at https://jbdevs.org/sdks/.
 
 ````bash
-./linux.sh --sdks "8.1 9.1"
+./install.sh --sdks "8.1 9.1"
 ````
 
 *Create a NIC profile*  
 
 ````bash
-./cygwin.sh --createnic y --nicusername tweakmaker --nicprefix com.tweakmaker
+./install.sh --createnic y --nicusername tweakmaker --nicprefix com.tweakmaker
 # OR
-./linux.sh --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
+./install.sh --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
 ````
 
 *All parameters*
 ````bash
-./linux.sh --installdir /var/ --sdks "8.1 9.3" --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
+./install.sh --installdir /var/ --sdks "8.1 9.3" --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker --fallback Y
 
 #OR
 
-./cygwin.sh -d /var/ -s "8.1 9.3" -n y -u "tweakmaker <tm@tweakmaker.net>" -p net.tweakmaker
+./install.sh -d /var/ -s "8.1 9.3" -n y -u "tweakmaker <tm@tweakmaker.net>" -p net.tweakmaker -f Y
 
 ````
 
@@ -73,6 +68,5 @@ export THEOS_DEVICE_PORT=22
 
 ## TODO
 
-* create $THEOS variable
-* OSX script
-* Unified script
+* option to create $THEOS variable
+* OSX support
