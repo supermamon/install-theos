@@ -218,7 +218,7 @@ for i in ${SDKS[@]}; do
   sdk="iPhoneOS${i}.sdk"
 
   echo -e "  \e[30;103m [DOWNLOADING ${sdk}...]                      \e[39;49m ";
-  wget "https://jbdevs.org/sdks/dl/${sdk}.tbz2"
+  wget "https://sdks.website/dl/${sdk}.tbz2"
 
   echo -e "  \e[30;103m [EXTRACTING ${sdk}...]                       \e[39;49m ";
   tar xf ${sdk}.tbz2

@@ -29,7 +29,7 @@ chmod +x install.sh
 ````
 
 *Custom SDKS*  
-Available SDKs can be found at https://jbdevs.org/sdks/.
+Available SDKs can be found at https://sdks.website/.
 
 ````bash
 ./install.sh --sdks "8.1 9.1"
