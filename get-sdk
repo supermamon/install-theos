@@ -1,0 +1,58 @@
+#!/bin/bash
+
+SDK_WEBSITE="https://sdks.website/dl"
+
+HL_NORMAL="\e[39;49m"
+HL_YELLOW="\e[30;103m"
+HL_RED="\e[97;41m"
+
+# Check if a paramter is passed.
+if [ "$*" == "" ]; then
+  echo;
+  echo " get-sdk: Downloads iOS SDK into your THEOS installation."
+  echo " Usage:   ./get-sdk [version]"
+  echo " Example: ./get-sdk 9.3"
+  echo " > will download iPhoneOS9.3.sdk into $THEOS/sdks/"
+  echo
+  echo;
+  exit 0
+fi
+
+if [ ! -w "$THEOS/sdks" ]
+then
+  echo -e "$HL_RED $THEOS/sdks folder is not writeable. Run with sudo or switch to root.$HL_NORMAL"
+  echo;
+  exit 1
+fi
+
+pushd $THEOS/sdks > /dev/null
+
+sdk="iPhoneOS$*.sdk"
+
+if [ -d "$THEOS/sdks/$sdk" ]; then
+  echo;
+  echo -e "$HL_RED $sdk already exists.$HL_NORMAL"
+  echo;
+  popd > /dev/null
+  exit 1;
+fi
+
+echo -e "$HL_YELLOW [DOWNLOADING ${sdk}...]                        $HL_NORMAL";
+wget "$SDK_WEBSITE/${sdk}.tbz2" --output-document=${sdk}.tbz2
+WGET_RESPONSE=$?
+
+#echo "wget response = $WGET_RESPONSE"
+
+if [ "$WGET_RESPONSE" == "0" ]; then
+  echo -e "$HL_YELLOW [EXTRACTING ${sdk}...]                         $HL_NORMAL";
+  tar xf ${sdk}.tbz2
+  rm ${sdk}.tbz2
+else
+  echo -e "$HL_RED Failed to download ${sdk}.$HL_NORMAL"
+  echo;
+  popd > /dev/null
+  exit 1
+fi
+echo -e "$HL_YELLOW [DONE       ${sdk}...]                         $HL_NORMAL";
+
+popd > /dev/null
