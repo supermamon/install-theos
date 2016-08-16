@@ -14,13 +14,21 @@
 
 ## Download & Run
 
+If you want to get to it working quickly:
+````bash
+curl -LO https://git.io/install-theos && bash install-theos
+````
+
+Or if you want to download it first:
 ````bash
 git clone https://github.com/supermamon/install-theos
 cd install-theos
 chmod +x install
-./install.sh [args]
-
+./install [args]
 ````
+
+
+<!-- wget https://git.io/install-theos && bash install-theos [args] -->
 
 ## Examples
 
