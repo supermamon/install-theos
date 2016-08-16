@@ -1,0 +1,361 @@
+#!/bin/bash
+
+# Universal Theos Install script
+# v1.1.0
+#
+# Changelog
+# v1.1.0 : Added Reinstall parameter
+#          Additional dependecy checks
+#          Check if install folder is writeable.
+#          Add ownership change
+#          Add wget error handling
+#          Progress message formatting
+# v1.0.1 : Updated sdks website
+# v1.0.0 : Merged indivual scripts
+# v0.2.0 : Script for Linux
+# v0.1.0 : Script for Cygwin
+
+
+THEOS_FOLDER_NAME="theos"
+
+# Variables for parameters
+THEOS_INSTALL_FOLDER=~/
+CREATE_NIC="N"
+NIC_USERNAME="My Name <myname@domain.com>"
+NIC_PREFIX="com.mycompany"
+INCLUDE_FALLBACK_HEADERS="N"
+REINSTALL="N"
+declare -a SDKS=(9.2);
+
+# Other Variables
+SDK_WEBSITE="https://sdks.website/dl"
+HL_NORMAL="\e[39;49m"
+HL_YELLOW="\e[30;103m"
+HL_RED="\e[97;41m"
+FG_GREEN="\e[92m"
+FG_ORANGE="\e[91m"
+
+#clear
+#printf "\033c"
+tput clear
+
+# Check supported platforms
+PLATFORM=`uname -o`
+PLATFORMS=(Cygwin GNU/Linux)
+
+if [[ ! ${PLATFORMS[*]} =~ "$PLATFORM" ]]
+then
+  echo -e "${HL_RED}Unsopported platform -- $PLATFORM.${HL_NORMAL}"
+  exit 1
+fi
+
+# start name parameters parser
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+# Use > 1 to consume two arguments per pass in the loop (e.g. each
+# argument has a corresponding value to go with it).
+# Use > 0 to consume one or more arguments per pass in the loop (e.g.
+# some arguments don't have a corresponding value to go with it such
+# as in the --default example).
+# note: if this is set to > 0 the /etc/hosts part is not recognized ( may be a bug )
+while [[ $# > 1 ]]
+do
+key="$1"
+
+case $key in
+    -d|--installdir)
+    THEOS_INSTALL_FOLDER="$2"
+    shift # past argument
+    ;;
+    -n|--createnic)
+    CREATE_NIC="$2"
+    CREATE_NIC=${CREATE_NIC^^}
+    shift # past argument
+    ;;
+    -u|--nicusername)
+    NIC_USERNAME="$2"
+    shift # past argument
+    ;;
+    -p|--nicprefix)
+    NIC_PREFIX="$2"
+    shift # past argument
+    ;;
+    -s|--sdks)
+    ARG_SDKS="$2"
+    declare -a SDKS=($ARG_SDKS);
+    shift # past argument
+    ;;
+    -f|--fallback)
+    INCLUDE_FALLBACK_HEADERS="$2"
+    INCLUDE_FALLBACK_HEADERS=${INCLUDE_FALLBACK_HEADERS^^}
+    shift # past argument
+    ;;
+    -r|--reinstall)
+    REINSTALL="$2"
+    REINSTALL=${REINSTALL^^}
+    shift # past argument
+    ;;
+    --default)
+    DEFAULT=YES
+    ;;
+    *)
+    # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+# end name parameters parser
+
+#-------------------------------------------------------------------------------
+# Display pre-installation summary to and prompt to confirm
+echo
+echo -e "${FG_GREEN}THEOS will be installed with the following configuration.${HL_NORMAL}"
+echo
+echo -e " THEOS_INSTALL_FOLDER     = ${THEOS_INSTALL_FOLDER}${THEOS_FOLDER_NAME}"
+echo -e " INCLUDE_FALLBACK_HEADERS = ${INCLUDE_FALLBACK_HEADERS}"
+echo -e " REINSTALL                = ${REINSTALL}"
+for i in ${SDKS[@]}; do
+  SDKSTR="$SDKSTR${i} "
+done
+echo -e " SDKS                     = ${SDKSTR}"
+
+echo -e " CREATE_NIC               = ${CREATE_NIC}"
+if [ "$CREATE_NIC" == "Y" ]
+then
+echo -e "   NIC_USERNAME           = ${NIC_USERNAME}"
+echo -e "   NIC_PREFIX             = ${NIC_PREFIX}"
+fi
+
+echo;
+echo -n -e "${FG_GREEN}Proceed (Y/N)?${HL_NORMAL} ";
+read -n 1 -r;
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    echo;
+    echo -e "${HL_RED}theos install aborted.${HL_NORMAL}"
+    echo;
+    exit 1
+fi
+#-------------------------------------------------------------------------------
+
+# Display pre-installation summary to and prompt to confirm
+echo
+echo -e "$HL_YELLOW [PRE-SETUP CHECK...]                                    ${HL_NORMAL}"
+echo
+#-------------------------------------------------------------------------------
+echo -e "${FG_GREEN}>> Checking parameters...${HL_NORMAL}"
+
+if [ ! -w "$THEOS_INSTALL_FOLDER" ]
+then
+  echo -e "${HL_RED}$THEOS_INSTALL_FOLDER is not writeable. Run with sudo or choose another path.${HL_NORMAL}"
+  exit 1
+fi
+
+if [ "$REINSTALL" == "N" ]; then
+  if [ -d "$THEOS_INSTALL_FOLDER$THEOS_FOLDER_NAME" ]; then
+    echo;
+    echo -e "${HL_RED}THEOS is already installed in $THEOS_INSTALL_FOLDER$THEOS_FOLDER_NAME.${HL_NORMAL}"
+    echo;
+    exit 1;
+  fi
+fi
+
+if [ "$CREATE_NIC" == "Y" ]
+then
+
+  if [ -e ~/.nicrc ]; then
+    echo;
+    echo -e "${HL_RED}.nicrc already exists. Back it up and remove.${HL_NORMAL}"
+    exit 1;
+  fi
+
+
+  if [ "$NIC_USERNAME" == "My Name <myname@domain.com>" ]
+  then
+    echo;
+    echo -e "${HL_RED}You need to provide a new username using the --nicusername (-u) parameter.${HL_NORMAL}"
+    exit 1
+  fi
+
+  if [ "$NIC_PREFIX" == "com.mycompany" ]
+  then
+    echo;
+    echo -e "${HL_RED}You need to provide a new prefix using the --nicprefix (-p) parameter.${HL_NORMAL}"
+    exit 1
+  fi
+
+fi
+echo -e "${FG_GREEN}>> Done.${HL_NORMAL}"
+#-------------------------------------------------------------------------------
+echo -e "${FG_GREEN}>> Checking dependencies...${HL_NORMAL}"
+DEP_MISSING=0
+
+declare -a basedeps=(wget curl git make perl python)
+if [ "$PLATFORM" == "Cygwin" ];
+then
+  declare -a extdeps=(ca-certificates openssh)
+else
+  declare -a extdeps=(ssh)
+fi
+combined=("${basedeps[@]}" "${extdeps[@]}" )
+for i in ${combined[@]}; do
+  echo -n "   ${i} ";
+  if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c ${i} | grep OK) == *"OK"* ]])
+  then
+    echo -e "${FG_GREEN}OK${HL_NORMAL}." ;
+  elif [[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]]
+  then
+    echo -e "${FG_GREEN}OK${HL_NORMAL}." ;
+  else
+    echo -e "${FG_ORANGE}not installed${HL_NORMAL}."
+    DEP_MISSING=1
+  fi
+done
+
+if [ "$DEP_MISSING" == "1" ]
+then
+  echo;
+  echo -e "${HL_RED}>> You need to install the missing packages first.${HL_NORMAL}"
+  echo;
+  exit 1
+fi
+echo -e "${FG_GREEN}>> Done.${HL_NORMAL}"
+#-------------------------------------------------------------------------------
+echo
+echo -e "${FG_GREEN}>> Ready to install.${HL_NORMAL}"
+echo
+echo -e "${HL_YELLOW} [PRE-SETUP CHECK...DONE]                                ${HL_NORMAL}";
+
+echo;
+echo -n -e "${FG_GREEN}Proceed to install (Y/N)?${HL_NORMAL} ";
+read -n 1 -r;
+echo;
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    echo;
+    echo -e "${HL_RED}theos install aborted.${HL_NORMAL}"
+    echo;
+    exit 1
+fi
+echo;
+#-------------------------------------------------------------------------------
+echo -e "${HL_YELLOW} [PREPARE INSTALL FOLDER...]                             ${HL_NORMAL}";
+
+# If the install folder is missing, create it
+if [ ! -d "$THEOS_INSTALL_FOLDER" ]; then
+  mkdir -p $THEOS_INSTALL_FOLDER
+fi
+
+if [ "$REINSTALL" == "Y" ]; then
+  echo -e "${FG_GREEN}>> Removing previous installation...${HL_NORMAL} ";
+  rm -rf $THEOS_INSTALL_FOLDER$THEOS_FOLDER_NAME
+  echo -e "${FG_GREEN}>> Done.${HL_NORMAL} ";
+fi
+
+echo -e "${HL_YELLOW} [PREPARE INSTALL FOLDER...DONE]                         ${HL_NORMAL}";
+
+#-------------------------------------------------------------------------------
+
+# go to the install folder
+pushd $THEOS_INSTALL_FOLDER > /dev/null
+
+#-------------------------------------------------------------------------------
+echo;
+echo -e "${HL_YELLOW} [DOWNLOADING THEOS...]                                  ${HL_NORMAL}";
+
+echo -e "${FG_GREEN}>> Cloning git repo...${HL_NORMAL} ";
+git clone --progress --recursive https://github.com/theos/theos.git $THEOS_FOLDER_NAME
+echo -e "${FG_GREEN}>> Done.${HL_NORMAL} ";
+
+# Change the owner of the install folder so that you won't have problems
+# when updating theos.
+if [[ "$SUDO_UID" != "" ]]  # assume sudo was used to force install
+then
+  echo -e "${FG_GREEN}>> Owning theos folder...${HL_NORMAL} ";
+  chown $SUDO_UID:$SUDO_GID $THEOS_FOLDER_NAME
+  echo -n -e "${FG_GREEN}>> Done.${HL_NORMAL} ";
+fi
+
+echo -e "${HL_YELLOW} [DOWNLOADING THEOS...DONE]                              ${HL_NORMAL}";
+#-------------------------------------------------------------------------------
+echo;
+echo -e "${HL_YELLOW} [DOWNLOADING SDKS...]                                   ${HL_NORMAL}";
+
+pushd $THEOS_FOLDER_NAME/sdks/ > /dev/null
+for i in ${SDKS[@]}; do
+  echo
+  sdk="iPhoneOS${i}.sdk"
+
+  echo -e "  ${HL_YELLOW} [DOWNLOADING ${sdk}...]                      ${HL_NORMAL}";
+  wget "$SDK_WEBSITE/${sdk}.tbz2" --output-document=${sdk}.tbz2
+  WGET_RESPONSE=$?
+
+  if [ "$WGET_RESPONSE" == "0" ]; then
+    echo -e "  ${HL_YELLOW} [EXTRACTING ${sdk}...]                       ${HL_NORMAL}";
+    tar xf ${sdk}.tbz2
+    rm ${sdk}.tbz2
+  else
+    echo -e "${FG_ORANGE}>> Warning: Failed to download ${sdk}.${HL_NORMAL}"
+    echo;
+  fi
+
+done
+popd > /dev/null
+echo
+echo -e "${HL_YELLOW} [DOWNLOADING SDKS...DONE.]                              ${HL_NORMAL}";
+
+#-------------------------------------------------------------------------------
+echo;
+echo -e "${HL_YELLOW} [DOWNLOADING TOOLCHAIN....]                             ${HL_NORMAL}";
+
+if [ "$PLATFORM" == "Cygwin" ];
+then
+  mkdir -p $THEOS_FOLDER_NAME/toolchain/windows
+  echo -e "${FG_GREEN}>> Dowloading Windows toolchain...${HL_NORMAL} ";
+  git clone --branch x86_64 https://github.com/coolstar/iOSToolchain4Win.git $THEOS_FOLDER_NAME/toolchain/windows/iphone
+  echo -e "${FG_GREEN}>> Done.${HL_NORMAL} ";
+else
+  echo -e "${FG_GREEN}>> Dowloading Linux toolchain...${HL_NORMAL} ";
+  wget https://developer.angelxwind.net/Linux/ios-toolchain_clang%2bllvm%2bld64_latest_linux_x86_64.zip
+  WGET_RESPONSE=$?
+
+  if [ "$WGET_RESPONSE" == "0" ]; then
+    echo -e "${FG_GREEN}>> Extracting...${HL_NORMAL} ";
+    unzip -q ios-toolchain_clang+llvm+ld64_latest_linux_x86_64.zip -d $THEOS_FOLDER_NAME/toolchain/
+    rm ios-toolchain_clang+llvm+ld64_latest_linux_x86_64.zip
+    echo -e "${FG_GREEN}>> Done.${HL_NORMAL} ";
+  else
+    echo -e "${FG_ORANGE}>> Warning: Failed to download toolchain.${HL_NORMAL} ";
+    echo;
+  fi
+
+
+fi
+echo -e "${HL_YELLOW} [DOWNLOADING TOOLCHAIN....DONE.]                        ${HL_NORMAL}";
+#-------------------------------------------------------------------------------
+if [ "$INCLUDE_FALLBACK_HEADERS" == "Y" ]
+then
+echo;
+echo -e "${HL_YELLOW} [DOWNLOADING FALLBACK HEADERS....]                      ${HL_NORMAL}";
+echo -e "${FG_GREEN}>> Downloading supermamon's fallback headers...${HL_NORMAL}";
+git clone https://github.com/supermamon/iOS-fallback-headers.git $THEOS_FOLDER_NAME/include/_fallback
+echo -e "${HL_YELLOW} [DOWNLOADING FALLBACK HEADERS....DONE.]                 ${HL_NORMAL}";
+fi
+
+#-------------------------------------------------------------------------------
+
+popd > /dev/null
+
+#-------------------------------------------------------------------------------
+if [ "$CREATE_NIC" == "Y" ]
+then
+
+  echo -e "${HL_YELLOW} [CREATING .nicrc...]                                    ${HL_NORMAL}";
+  echo "username = \"$NIC_USERNAME\"" > .nicrc
+  echo "package_prefix = \"$NIC_PREFIX\"" >> .nicrc
+  mv -f .nicrc ~/
+  echo -e "${HL_YELLOW} [CREATING .nicrc...DONE.]                               ${HL_NORMAL}";
+
+fi
+echo;
+echo -e "${FG_GREEN}THEOS install completed.${HL_NORMAL}";
