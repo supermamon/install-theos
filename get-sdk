@@ -2,10 +2,34 @@
 
 SDK_WEBSITE="https://sdks.website/dl"
 
+#-------------------------------------------------------------------------------
+# UI Functions
 HL_NORMAL="\e[39;49m"
 HL_YELLOW="\e[30;103m"
 HL_RED="\e[97;41m"
+FG_GREEN="\e[92m"
+FG_ORANGE="\e[91m"
 
+echo_title () {
+  local COLS=`expr $(tput cols) - 2`;
+  printf "${HL_YELLOW}%-${COLS}s${HL_NORMAL}\n" "$*"
+}
+echo_info () {
+  echo -e "${FG_GREEN}$*${HL_NORMAL}"
+}
+echo_warning () {
+  echo -e "${FG_ORANGE}$*${HL_NORMAL}"
+}
+echo_n_info () {
+  echo -n -e "${FG_GREEN}$*${HL_NORMAL}"
+}
+echo_error () {
+  echo;
+  echo -e "${HL_RED}$*${HL_NORMAL}"
+  echo;
+}
+
+#-------------------------------------------------------------------------------
 # Check if a paramter is passed.
 if [ "$*" == "" ]; then
   echo;
@@ -17,14 +41,14 @@ if [ "$*" == "" ]; then
   echo;
   exit 0
 fi
-
+#-------------------------------------------------------------------------------
 if [ ! -w "$THEOS/sdks" ]
 then
   echo -e "$HL_RED $THEOS/sdks folder is not writeable. Run with sudo or switch to root.$HL_NORMAL"
   echo;
   exit 1
 fi
-
+#-------------------------------------------------------------------------------
 pushd $THEOS/sdks > /dev/null
 
 sdk="iPhoneOS$*.sdk"
@@ -37,22 +61,34 @@ if [ -d "$THEOS/sdks/$sdk" ]; then
   exit 1;
 fi
 
-echo -e "$HL_YELLOW [DOWNLOADING ${sdk}...]                        $HL_NORMAL";
-wget "$SDK_WEBSITE/${sdk}.tbz2" --output-document=${sdk}.tbz2
-WGET_RESPONSE=$?
+echo_title " [DOWNLOADING ${sdk}...]";
 
-#echo "wget response = $WGET_RESPONSE"
-
-if [ "$WGET_RESPONSE" == "0" ]; then
-  echo -e "$HL_YELLOW [EXTRACTING ${sdk}...]                         $HL_NORMAL";
-  tar xf ${sdk}.tbz2
-  rm ${sdk}.tbz2
+if [ "$*" == "9.3" ]; then
+  git clone https://github.com/mstg/iOS-full-sdk.git .93tmp
+  GIT_RESPONSE=$?
+  if [ "$GIT_RESPONSE" == "0" ]; then
+    mv .93tmp/iPhoneOS9.3.sdk .
+  else
+    echo_warning ">> Warning: Failed to download ${sdk}."
+    echo;
+  fi
+  rm -rf .93tmp
 else
-  echo -e "$HL_RED Failed to download ${sdk}.$HL_NORMAL"
-  echo;
-  popd > /dev/null
-  exit 1
+  wget "$SDK_WEBSITE/${sdk}.tbz2" --output-document=${sdk}.tbz2
+  WGET_RESPONSE=$?
+
+  if [ "$WGET_RESPONSE" == "0" ]; then
+    echo_info " Extracting ${sdk}...";
+    tar xf ${sdk}.tbz2
+    rm ${sdk}.tbz2*
+  else
+    echo_error "Failed to download ${sdk}."
+    rm ${sdk}.tbz2
+    popd > /dev/null
+    exit 1
+  fi
 fi
-echo -e "$HL_YELLOW [DONE       ${sdk}...]                         $HL_NORMAL";
+
+echo_title " [DOWNLOADING ${sdk}...DONE.]";
 
 popd > /dev/null

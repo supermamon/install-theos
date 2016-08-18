@@ -1,4 +1,11 @@
-``bash`` script to install [theos](https://github.com/theos/theos). See Supported Systems section for tested operating systems.
+``bash`` script to install [theos](https://github.com/theos/theos).
+
+## What does this do?
+
+* Installs [theos](https://github.com/theos/theos) and [headers](https://github.com/theos/headers).
+* Downloads SDKs (iOS 9.2 only by default)
+* (Optional) Downloads [fallback headers](https://github.com/supermamon/iOS-fallback-headers).
+* (Optional) Creates [~/.nicrc](https://github.com/theos/theos/wiki/nicrc%285%29)
 
 ## Arguments
 
@@ -14,9 +21,9 @@
 
 ## Download & Run
 
-If you want to get to it working quickly:
+If you want to get to work quickly:
 ````bash
-curl -LO https://git.io/install-theos && bash install-theos
+curl -OKL https://git.io/install-theos && bash install-theos
 ````
 
 Or if you want to download it first:
@@ -88,9 +95,8 @@ export THEOS_DEVICE_PORT=22
 ## Supported Systems
 * Windows 7 (Cygwin)
 * Windows 10 (Cygwin)
-* Linux Mint 17.3 "Rosa"
-* Linux Mint 18 "Sara"
-* Ubuntu 14.04.2 LTS
+* Linux Mint 17+
+* Ubuntu 14.04+
 
 ## Todo
 
@@ -99,6 +105,10 @@ export THEOS_DEVICE_PORT=22
 
 ## Changelog
 
+* v1.2.0 :
+  - Custom iPhoneOS9.3 SDK source
+  - More error handling
+  - UI changes
 * v1.1.0
   - Added Reinstall parameter
   - Additional dependecy checks
