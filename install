@@ -320,7 +320,8 @@ for i in ${SDKS[@]}; do
   echo_info "Downloading ${sdk}...";
 
   if [ "${i}" == "9.3" ]; then
-    git clone https://github.com/mstg/iOS-full-sdk.git .93tmp
+    git clone https://github.com/theos/sdks .93tmp
+
     GIT_RESPONSE=$?
     if [ "$GIT_RESPONSE" == "0" ]; then
       mv .93tmp/iPhoneOS9.3.sdk ./
