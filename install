@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Universal Theos Install script
-# v1.2.0
+# v1.2.1
 #
 # Changelog
+# v1.2.1 : Updated iPhoneOS9.3 SDK source
 # v1.2.0 : Custom iPhoneOS9.3 SDK source
 #          More error handling
 #          UI changes

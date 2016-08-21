@@ -105,6 +105,8 @@ export THEOS_DEVICE_PORT=22
 
 ## Changelog
 
+* v1.2.1 :
+  - Updated iPhoneOS9.3 SDK source
 * v1.2.0 :
   - Custom iPhoneOS9.3 SDK source
   - More error handling
