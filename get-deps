@@ -1,17 +1,20 @@
 #!/bin/bash
 
-# get-deps
-# v1.0.0
+# get-deps v1.0.2
 # This script is used to install dependencies required by theos.
+# Changelog
+# v1.0.2 : Add suggenstions for package install errors
+# v1.0.1 : Fix curl options
+# v1.0.0 : First version
 
+#-------------------------------------------------------------------------------
 PLATFORM=`uname -o`
 APTGET="apt-get"
 declare -a DEPS_ALL=(wget git make perl python)
 declare -a DEPS_CYGWIN=(ca-certificates openssh)
 declare -a DEPS_LINUX=(ssh)
 #declare -a DEPS_DARWIN=(ca-certificates)
-
-
+#-------------------------------------------------------------------------------
 # CURL Options
 # -O  : Write output to a file named as the remote file
 # -J  : Use the header-provided filename
@@ -19,7 +22,6 @@ declare -a DEPS_LINUX=(ssh)
 # -k  : Allow connections to SSL sites without certs
 # -s  : Silent mode. Don't output anything
 CURLCMD="curl -O -J -L -k -s"
-
 #-------------------------------------------------------------------------------
 # UI Functions
 HL_NORMAL="\e[39;49m"
@@ -103,7 +105,12 @@ for i in ${combined[@]}; do
     echo_warning "  ${i} is not installed. Initiating install..."
     ${APTGET} install ${i}
     if [[ $? != 0 ]]; then
-      echo_error "  ${i} installation failed. Please try to install manually."
+      echo_error "  ${i} installation failed.  "
+      echo_warning "  You may need to run apt-get update to update your package listing."
+      if  [ "$PLATFORM" == "Cygwin" ]; then
+        echo_warning "  Or run apt-cyg update <mirror url> to add another Cygwin mirror."
+        echo;
+      fi
       exit 1;
     fi
   fi
