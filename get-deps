@@ -1,0 +1,100 @@
+#!/bin/bash
+
+# get-deps
+# v1.0.0
+# This script is used to install dependencies required by theos.
+
+PLATFORM=`uname -o`
+APTGET="apt-get"
+declare -a DEPS_ALL=(wget git make perl python)
+declare -a DEPS_CYGWIN=(ca-certificates openssh)
+declare -a DEPS_LINUX=(ssh)
+#declare -a DEPS_DARWIN=(ca-certificates)
+
+#-------------------------------------------------------------------------------
+# UI Functions
+HL_NORMAL="\e[39;49m"
+HL_YELLOW="\e[30;103m"
+HL_RED="\e[97;41m"
+FG_GREEN="\e[92m"
+FG_YELLOW="\e[93m"
+
+echo_title () {
+  local COLS=`expr $(tput cols) - 2`;
+  printf "${HL_YELLOW}%-${COLS}s${HL_NORMAL}\n" "$*"
+}
+echo_info () {
+  echo -e "${FG_GREEN}$*${HL_NORMAL}"
+}
+echo_warning () {
+  echo -e "${FG_YELLOW}$*${HL_NORMAL}"
+}
+echo_n_info () {
+  echo -n -e "${FG_GREEN}$*${HL_NORMAL}"
+}
+echo_error () {
+  echo;
+  echo -e "${HL_RED}$*${HL_NORMAL}"
+  echo;
+}
+#-------------------------------------------------------------------------------
+echo_title " [PRE-CHECK: curl installation]";
+if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c curl | grep OK) != *"OK"* ]]); then
+  echo_error "curl is not installed. Please run Cygwin setup again to install curl."
+  exit 1;
+elif [ "$PLATFORM" != "Cygwin" ] && ([[ $(dpkg-query -W -f='${Status}\n' curl 2>/dev/null | grep ok) != *"ok"* ]]); then
+  echo_info "Installing curl..."
+  ${APTGET} install curl
+  if [[ $? != 0 ]]; then
+    echo_error "curl installation failed. Please install manually."
+    exit 1;
+  else
+    echo_info "  Done."
+  fi
+else
+  echo_info "curl is installed and ready."
+fi
+#-------------------------------------------------------------------------------
+echo_title " [PRE-CHECK: apt-get installation]";
+if [ "$PLATFORM" ==  "Cygwin" ]; then
+  if [ ! -e /bin/apt-cyg ]; then
+    echo_info "Installing apt-cyg..."
+    curl -Okso apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
+    if [[ $? != 0 ]]; then
+      echo_error "Failed."
+      exit 1;
+    else
+      install apt-cyg /bin
+      ln -s /bin/apt-cyg /bin/apt-get
+      echo_info "Done."
+    fi
+  fi
+  #APTGET="apt-cyg"
+fi
+echo_info "apt-get is ready."
+#-------------------------------------------------------------------------------
+echo_title " [Installing Dependencies...]";
+if [ "$PLATFORM" == "Cygwin" ];
+then
+  declare -a extdeps=${DEPS_CYGWIN[@]}
+else
+  declare -a extdeps=${DEPS_LINUX[@]}
+fi
+combined=("${DEPS_ALL[@]}" "${extdeps[@]}" )
+for i in ${combined[@]}; do
+  echo_info "Checking ${i} installation..."
+  if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c ${i} | grep OK) == *"OK"* ]]); then
+    echo_info "  ${i} is already installed."
+  elif [ "$PLATFORM" != "Cygwin" ] && ([[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]]); then
+    echo_info "  ${i} is already installed."
+  else
+    echo_warning "  ${i} is not installed. Initiating install..."
+    ${APTGET} install ${i}
+    if [[ $? != 0 ]]; then
+      echo_error "  ${i} installation failed. Please try to install manually."
+      exit 1;
+    fi
+  fi
+done #for
+echo_title " [Installing Dependencies...Done.]";
+#-------------------------------------------------------------------------------
