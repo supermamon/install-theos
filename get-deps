@@ -11,6 +11,15 @@ declare -a DEPS_CYGWIN=(ca-certificates openssh)
 declare -a DEPS_LINUX=(ssh)
 #declare -a DEPS_DARWIN=(ca-certificates)
 
+
+# CURL Options
+# -O  : Write output to a file named as the remote file
+# -J  : Use the header-provided filename
+# -L  : Follow redirects
+# -k  : Allow connections to SSL sites without certs
+# -s  : Silent mode. Don't output anything
+CURLCMD="curl -O -J -L -k -s"
+
 #-------------------------------------------------------------------------------
 # UI Functions
 HL_NORMAL="\e[39;49m"
@@ -58,20 +67,23 @@ fi
 echo_title " [PRE-CHECK: apt-get installation]";
 if [ "$PLATFORM" ==  "Cygwin" ]; then
   if [ ! -e /bin/apt-cyg ]; then
-    echo_info "Installing apt-cyg..."
-    curl -Okso apt-cyg https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
+    echo_info "Downloading apt-cyg..."
+    ${CURLCMD} https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
     if [[ $? != 0 ]]; then
       echo_error "Failed."
       exit 1;
     else
-      install apt-cyg /bin
+      echo_info "Installing apt-cyg..."
+      install ./apt-cyg /bin
+      echo_info "Linking apt-cyg to apt-get..."
       ln -s /bin/apt-cyg /bin/apt-get
-      echo_info "Done."
+      rm ./apt-cyg
     fi
   fi
   #APTGET="apt-cyg"
 fi
 echo_info "apt-get is ready."
+
 #-------------------------------------------------------------------------------
 echo_title " [Installing Dependencies...]";
 if [ "$PLATFORM" == "Cygwin" ];
