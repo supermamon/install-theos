@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# get-deps v1.0.2
+# install-deps v1.0.2
 # This script is used to install dependencies required by theos.
 # Changelog
 # v1.0.2 : Add suggenstions for package install errors
