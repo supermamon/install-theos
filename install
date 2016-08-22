@@ -1,9 +1,13 @@
 #!/bin/bash
-
+#-------------------------------------------------------------------------------
 # Universal Theos Install script
-# v1.2.1
+# v2.0.0
 #
 # Changelog
+# v2.0.0 : Made curl a hard requirement for the script
+#        : Add --install-dependencies option. Default Y.
+#        : Add --no-platformcheck option. Default N.
+#
 # v1.2.1 : Updated iPhoneOS9.3 SDK source
 # v1.2.0 : Custom iPhoneOS9.3 SDK source
 #          More error handling
@@ -18,23 +22,47 @@
 # v1.0.0 : Merged indivual scripts
 # v0.2.0 : Script for Linux
 # v0.1.0 : Script for Cygwin
-
+#-------------------------------------------------------------------------------
 THEOS_FOLDER_NAME="theos"
-
+#-------------------------------------------------------------------------------
 # Variables for parameters
-THEOS_INSTALL_FOLDER=~/
-CREATE_NIC="N"
-NIC_USERNAME="My Name <myname@domain.com>"
-NIC_PREFIX="com.mycompany"
-INCLUDE_FALLBACK_HEADERS="N"
-REINSTALL="N"
-declare -a SDKS=(9.2);
-
-# Other Variables
-SDK_WEBSITE="https://sdks.website/dl"
+THEOS_INSTALL_FOLDER=~/                       # -d | --installdir
+CREATE_NIC="N"                                # -n | --createnic
+NIC_USERNAME="My Name <myname@domain.com>"    # -u | --nicusername
+NIC_PREFIX="com.mycompany"                    # -p | --nicprefix
+INCLUDE_FALLBACK_HEADERS="N"                  # -f | --fallback
+REINSTALL="N"                                 # -r | --reinstall
+SKIP_PLATFORMCHECK="N"                        # -c | --no-platformcheck
+INSTALL_DEPENDENCIES="Y"                      # -e | --install-dependencies
+declare -a SDKS=(9.2);                        # -s | --sdks
 
 #-------------------------------------------------------------------------------
-# UI Functions
+# Other Variables
+
+# SDK_WEBSITE: The website where to download SDKS
+SDK_WEBSITE="https://sdks.website/dl"
+
+# Dependencies:
+# DEPS_HARD   : Hard dependecies. Required to execute this script
+# DEPS_ALL    : Dependencies common to all platforms
+# DEPS_CYGWIN : Cygwin dependecies
+# DEPS_LINUX  : Linux dependecies
+# DEPS_IOS    : iOS dependencies
+declare -a DEPS_HARD=(curl)
+declare -a DEPS_ALL=(wget git make perl python)
+declare -a DEPS_CYGWIN=(ca-certificates openssh)
+declare -a DEPS_LINUX=(ssh)
+declare -a DEPS_DARWIN=(ca-certificates)
+
+# CURL Options: This is use to download apt-cyg on Cygwin systems
+# -O  : Write output to a file named as the remote file
+# -L  : Follow redirects
+# -k  : Allow connections to SSL sites without certs
+# -s  : Silent mode. Don't output anything
+CURLCMD="curl -O -J -L -k -s"
+
+#-------------------------------------------------------------------------------
+# UI Functions: Just some fancy coloring to easily view installation progress
 HL_NORMAL="\e[39;49m"
 HL_YELLOW="\e[30;103m"
 HL_RED="\e[97;41m"
@@ -60,20 +88,7 @@ echo_error () {
   echo;
 }
 #-------------------------------------------------------------------------------
-#clear
-#printf "\033c"
 tput clear # this one works accross platforms
-
-#-------------------------------------------------------------------------------
-# Check supported platforms
-PLATFORM=`uname -o`
-PLATFORMS=(Cygwin GNU/Linux)
-
-if [[ ! ${PLATFORMS[*]} =~ "$PLATFORM" ]]
-then
-  echo_error "Unsopported platform -- $PLATFORM."
-  exit 1
-fi
 
 #-------------------------------------------------------------------------------
 # start name parameters parser
@@ -121,6 +136,16 @@ case $key in
     REINSTALL=${REINSTALL^^}
     shift # past argument
     ;;
+    -c|--no-platformcheck)
+    SKIP_PLATFORMCHECK="$2"
+    SKIP_PLATFORMCHECK=${SKIP_PLATFORMCHECK^^}
+    shift # past argument
+    ;;
+    -e|--install-dependencies)
+    INSTALL_DEPENDENCIES="$2"
+    INSTALL_DEPENDENCIES=${INSTALL_DEPENDENCIES^^}
+    shift # past argument
+    ;;
     --default)
     DEFAULT=YES
     ;;
@@ -131,6 +156,21 @@ esac
 shift # past argument or value
 done
 # end name parameters parser
+
+#-------------------------------------------------------------------------------
+# Check supported platforms
+PLATFORM=`uname -o`
+PLATFORMS=(Cygwin GNU/Linux) # still needs more iOS, macOS
+
+if [ "$SKIP_PLATFORMCHECK" == "N" ]; then
+  if [[ ! ${PLATFORMS[*]} =~ "$PLATFORM" ]]
+  then
+    echo_error "This script is not tested on your platform -- $PLATFORM."
+    echo_warning "Run with '--no-platformcheck Y' to skip this message."
+    echo;
+    exit 1
+  fi
+fi
 
 #-------------------------------------------------------------------------------
 # Display pre-installation summary to and prompt to confirm
@@ -151,6 +191,8 @@ then
 echo -e "   NIC_USERNAME           = ${NIC_USERNAME}"
 echo -e "   NIC_PREFIX             = ${NIC_PREFIX}"
 fi
+echo -e " INSTALL_DEPENDENCIES     = ${INSTALL_DEPENDENCIES}"
+echo -e " SKIP_PLATFORMCHECK       = ${SKIP_PLATFORMCHECK}"
 
 echo;
 if [ "$REINSTALL" == "Y" ]; then
@@ -168,12 +210,11 @@ then
     exit 1
 fi
 #-------------------------------------------------------------------------------
-
-# Display pre-installation summary to and prompt to confirm
+# Display pre-installation check
 echo;
 echo_title " [PRE-SETUP CHECK...]"
 echo "";
-#-------------------------------------------------------------------------------
+
 echo_info ">> Checking parameters..."
 
 # Check if the install folder is writable
@@ -192,22 +233,19 @@ if [ "$REINSTALL" == "N" ]; then
 fi
 
 # Check nic parameters
-if [ "$CREATE_NIC" == "Y" ]
-then
+if [ "$CREATE_NIC" == "Y" ]; then
 
   if [ -e ~/.nicrc ]; then
     echo_error ".nicrc already exists. Back it up and remove."
     exit 1;
   fi
-
-  if [ "$NIC_USERNAME" == "My Name <myname@domain.com>" ]
-  then
+  # if CREATE_NIC=Y, require username and prefix
+  if [ "$NIC_USERNAME" == "My Name <myname@domain.com>" ]; then
     echo_error "You need to provide a new username using the --nicusername (-u) parameter."
     exit 1
   fi
 
-  if [ "$NIC_PREFIX" == "com.mycompany" ]
-  then
+  if [ "$NIC_PREFIX" == "com.mycompany" ]; then
     echo_error "You need to provide a new prefix using the --nicprefix (-p) parameter."
     exit 1
   fi
@@ -216,23 +254,40 @@ fi
 echo_info ">> Done."
 
 #-------------------------------------------------------------------------------
+echo_info ">> Checking hard dependencies..."
+
+for i in ${DEPS_HARD[@]}; do
+  echo -n "   ${i} ";
+  if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c ${i} | grep OK) == *"OK"* ]])
+  then
+    echo_info "OK."
+  elif [ "$PLATFORM" != "Cygwin" ] && ([[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]])
+  then
+    echo_info "OK."
+  else
+    echo_warning "not installed."
+    echo_error "${i} is required to use this script."
+    exit 1;
+  fi
+done
+
+#-------------------------------------------------------------------------------
 echo_info ">> Checking dependencies..."
 DEP_MISSING=0
 
-declare -a basedeps=(wget curl git make perl python)
 if [ "$PLATFORM" == "Cygwin" ];
 then
-  declare -a extdeps=(ca-certificates openssh)
+  declare -a extdeps=${DEPS_CYGWIN[@]}
 else
-  declare -a extdeps=(ssh)
+  declare -a extdeps=${DEPS_LINUX[@]}
 fi
-combined=("${basedeps[@]}" "${extdeps[@]}" )
+combined=("${DEPS_ALL[@]}" "${extdeps[@]}" )
 for i in ${combined[@]}; do
   echo -n "   ${i} ";
   if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c ${i} | grep OK) == *"OK"* ]])
   then
     echo_info "OK."
-  elif [[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]]
+  elif [ "$PLATFORM" != "Cygwin" ] && ([[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]])
   then
     echo_info "OK."
   else
@@ -241,10 +296,19 @@ for i in ${combined[@]}; do
   fi
 done
 
-if [ "$DEP_MISSING" == "1" ]
-then
-  echo_error ">> You need to install the missing packages first."
-  exit 1
+if [ "$DEP_MISSING" == "1" ]; then
+  # Show warning if INSTALL_DEPENDENCIES is provided
+  if [ "$INSTALL_DEPENDENCIES" == "Y" ];then
+    echo;
+    echo_warning "   Warning, there are missing dependecies."
+    echo_warning "   This script will to install the missing items."
+    echo;
+  # Otherwise, show error and exit
+  else
+    echo_error ">> You need to install the missing packages first."
+    exit 1;
+  fi
+
 fi
 echo_info ">> Done."
 #-------------------------------------------------------------------------------
@@ -257,12 +321,62 @@ echo;
 echo_n_info "Proceed to install (Y/N)? ";
 read -n 1 -r;
 echo;
-if [[ ! $REPLY =~ ^[Yy]$ ]]
-then
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo_error "theos install aborted."
     exit 1
 fi
 echo;
+#-------------------------------------------------------------------------------
+# Install dependencies first
+if [ "$INSTALL_DEPENDENCIES" == "Y" ];then
+
+echo_title " [INSTALLING DEPENDENCIES...]";
+
+if [ "$PLATFORM" ==  "Cygwin" ]; then
+  echo_info ">> apt-cyg"
+  if [ ! -e /bin/apt-cyg ]; then
+    echo_info "   Downloading..."
+    ${CURLCMD} https://raw.githubusercontent.com/transcode-open/apt-cyg/master/apt-cyg
+    if [[ $? != 0 ]]; then
+      echo_error "Failed."
+      exit 1;
+    else
+      echo_info "   Installing..."
+      install ./apt-cyg /bin
+      echo_info "   Linking to apt-get..."
+      ln -s /bin/apt-cyg /bin/apt-get
+      rm ./apt-cyg
+    fi
+  else
+    echo_info "   apt-cyg is already installed."
+  fi
+fi
+
+for i in ${combined[@]}; do
+  echo_info ">> ${i}"
+  if  [ "$PLATFORM" == "Cygwin" ] && ([[ $(cygcheck -c ${i} | grep OK) == *"OK"* ]]); then
+    echo_info "   ${i} is already installed."
+  elif [ "$PLATFORM" != "Cygwin" ] && ([[ $(dpkg-query -W -f='${Status}\n' ${i} 2>/dev/null | grep ok) == *"ok"* ]]); then
+    echo_info "   ${i} is already installed."
+  else
+    echo_warning "   ${i} is not installed. Initiating install..."
+    echo;
+    apt-get install ${i}
+    if [[ $? != 0 ]]; then
+      echo_error "   ${i} installation failed.  "
+      echo_warning "You may need to run apt-get update to update your package listing."
+      if  [ "$PLATFORM" == "Cygwin" ]; then
+        echo_warning "Or run apt-cyg update <mirror url> to add another Cygwin mirror."
+        echo;
+      fi
+      exit 1;
+    fi
+  fi
+done #for
+
+echo_title " [INSTALLING DEPENDENCIES...DONE.]";
+fi
+
 #-------------------------------------------------------------------------------
 echo_title " [PREPARE INSTALL FOLDER...]";
 

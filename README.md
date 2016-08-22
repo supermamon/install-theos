@@ -16,14 +16,16 @@
 |--createnic, -n |Create ~/.nicrc file. Pass *Y* to create. Default is *N*.|--createnic Y|
 |--nicusername, -u|Default username when creating a tweak.|--nicusername tweakmaker <br />OR<br /> --u "tweakmaker &lt;tweakmaker@mycompany.com&gt;"|
 |--nicprefix, -p|Default bundle id prefix.|--nicprefix com.mycompany|
-|--fallback, -f|Include [fallback headers](https://github.com/supermamon/iOS-fallback-headers). Default is N.|--fallback Y|
-|--reinstall, -r|Delete and re-install theos.|--reinstall Y|
+|--fallback, -f|Include [fallback headers](https://github.com/supermamon/iOS-fallback-headers). Default is *N*.|--fallback Y|
+|--reinstall, -r|Delete and re-install theos. Default is *N*.|--reinstall Y|
+|--install-dependencies, -e|Include dependencies when installing. Default is *Y*.|--install-dependencies N|
+|--no-platformcheck, -c|Skip checking OS/platform when installing. Useful when testing on unsupported platforms. Default is *N*.|--no-platformcheck Y|
 
 ## Download & Run
 
 If you want to get to work quickly:
 ````bash
-curl -OKL https://git.io/install-theos && bash install-theos
+curl -JOLks https://git.io/install-theos && bash install-theos
 ````
 
 Or if you want to download it first:
@@ -40,7 +42,8 @@ chmod +x install
 ## Examples
 
 *Default Installation*
-This will install theos on the home directory with iOS9.2 SDK
+
+This will install theos and its dependencies on the home directory with iOS9.2 SDK
 ````bash
 ./install
 ````
@@ -57,7 +60,8 @@ Available SDKs can be found at https://sdks.website/.
 ./install --sdks "8.1 9.1"
 ````
 
-*Delete and re-install theos*
+*Delete and re-install theos with 9.3 SDK*
+
 ````bash
 ./install --reinstall Y --sdks 9.3
 ````
@@ -70,13 +74,20 @@ Available SDKs can be found at https://sdks.website/.
 ./install --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker
 ````
 
+*Skip dependency download*
+
+````bash
+./install --install-dependencies N
+````
+
+
 *All parameters*
 ````bash
 ./install --installdir /var/ --sdks "8.1 9.3" --createnic y --nicusername "tweakmaker <tm@tweakmaker.net>" --nicprefix net.tweakmaker --fallback Y
-
+--reinstall Y --install-dependencies Y --no-platformcheck N
 #OR
 
-./install -d /var/ -s "8.1 9.3" -n y -u "tweakmaker <tm@tweakmaker.net>" -p net.tweakmaker -f Y
+./install -d /var/ -s "8.1 9.3" -n y -u "tweakmaker <tm@tweakmaker.net>" -p net.tweakmaker -f Y -r y -e Y -c N
 
 ````
 
@@ -92,7 +103,7 @@ export THEOS_DEVICE_IP=<ip of your device>
 export THEOS_DEVICE_PORT=22
 ````
 
-## Supported Systems
+## Tested Platforms
 * Windows 7 (Cygwin)
 * Windows 10 (Cygwin)
 * Linux Mint 17+
@@ -101,10 +112,14 @@ export THEOS_DEVICE_PORT=22
 ## Todo
 
 * option to create $THEOS variable
-* OSX support
+* iOS & OSX support
 
 ## Changelog
 
+* v2.0.0 :
+  - Made `curl` a hard requirement for the script
+  - Add `--install-dependencies` option. Default Y.
+  - Add `--no-platformcheck` option. Default N.
 * v1.2.1 :
   - Updated iPhoneOS9.3 SDK source
 * v1.2.0 :
