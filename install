@@ -4,6 +4,7 @@
 # v2.0.0
 #
 # Changelog
+# v2.0.1 : Added error handling on removing previous install
 # v2.0.0 : Made curl a hard requirement for the script
 #        : Add --install-dependencies option. Default Y.
 #        : Add --no-platformcheck option. Default N.
@@ -388,6 +389,11 @@ fi
 if [ "$REINSTALL" == "Y" ]; then
   echo_info ">> Removing previous installation...";
   rm -rf $THEOS_INSTALL_FOLDER$THEOS_FOLDER_NAME
+  if [[ $? != 0 ]]; then
+    echo_error "Failed to remove previous installation."
+    echo_warning "Try running script with sudo.";
+    exit 1;
+  fi
   echo_info ">> Done.";
 fi
 

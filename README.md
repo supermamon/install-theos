@@ -116,6 +116,8 @@ export THEOS_DEVICE_PORT=22
 
 ## Changelog
 
+* v2.0.1 :
+  - Added error handing on removing previous install
 * v2.0.0 :
   - Made `curl` a hard requirement for the script
   - Add `--install-dependencies` option. Default Y.
