@@ -2,24 +2,11 @@
 
 ## What does this do?
 
-* Installs [theos](https://github.com/theos/theos) and [headers](https://github.com/theos/headers).
+* Installs [theos](https://github.com/theos/theos), its dependencies and [headers](https://github.com/theos/headers).
 * Downloads SDKs (iOS 9.2 only by default)
 * (Optional) Downloads [fallback headers](https://github.com/supermamon/iOS-fallback-headers).
 * (Optional) Creates [~/.nicrc](https://github.com/theos/theos/wiki/nicrc%285%29)
-
-## Arguments
-
-|Argument        |Description  |Examples|
-|----------------|-------------|--------|
-|--installdir, -d|Specify the directory where to install. Default is ~/|--installdir /opt/|
-|--sdks, -s      |List of SDKS to download. Enclose in quotes if multiple. Default is 9.2. |--sdks "8.1 9.2"|
-|--createnic, -n |Create ~/.nicrc file. Pass *Y* to create. Default is *N*.|--createnic Y|
-|--nicusername, -u|Default username when creating a tweak.|--nicusername tweakmaker <br />OR<br /> --u "tweakmaker &lt;tweakmaker@mycompany.com&gt;"|
-|--nicprefix, -p|Default bundle id prefix.|--nicprefix com.mycompany|
-|--fallback, -f|Include [fallback headers](https://github.com/supermamon/iOS-fallback-headers). Default is *N*.|--fallback Y|
-|--reinstall, -r|Delete and re-install theos. Default is *N*.|--reinstall Y|
-|--install-dependencies, -e|Include dependencies when installing. Default is *Y*.|--install-dependencies N|
-|--no-platformcheck, -c|Skip checking OS/platform when installing. Useful when testing on unsupported platforms. Default is *N*.|--no-platformcheck Y|
+* (Optional) Delete existing installation and re-install
 
 ## Download & Run
 
@@ -36,6 +23,21 @@ chmod +x install
 ./install [args]
 ````
 
+## Arguments
+
+|Argument        |Description  |Examples|
+|----------------|-------------|--------|
+|--installdir, -d|Specify the directory where to install. Default is ~/|--installdir /opt/|
+|--sdks, -s      |List of SDKS to download. Enclose in quotes if multiple. Default is 9.2. |--sdks "8.1 9.2"|
+|--createnic, -n |Create ~/.nicrc file. Pass *Y* to create. Default is *N*.|--createnic Y|
+|--nicusername, -u|Default username when creating a tweak.|--nicusername tweakmaker <br />OR<br /> --u "tweakmaker &lt;tweakmaker@mycompany.com&gt;"|
+|--nicprefix, -p|Default bundle id prefix.|--nicprefix com.mycompany|
+|--fallback, -f|Include [fallback headers](https://github.com/supermamon/iOS-fallback-headers). Default is *N*.|--fallback Y|
+|--reinstall, -r|Delete and re-install theos. Default is *N*.|--reinstall Y|
+|--install-dependencies, -e|Include dependencies when installing. Default is *Y*.|--install-dependencies N|
+|--no-platformcheck, -c|Skip checking OS/platform when installing. Useful when trying to install on unsupported platforms. Default is *N*.|--no-platformcheck Y|
+
+
 
 <!-- wget https://git.io/install-theos && bash install-theos [args] -->
 
@@ -50,14 +52,14 @@ This will install theos and its dependencies on the home directory with iOS9.2 S
 
 *Custom install directory*
 ````bash
-./install --installdir /var/
+./install --installdir /var/  # don't forget the ending slash
 ````
 
 *Custom SDKS*  
 Available SDKs can be found at https://sdks.website/.
 
 ````bash
-./install --sdks "8.1 9.1"
+./install --sdks "8.1 9.1"  # enclose in quotes if multiple
 ````
 
 *Delete and re-install theos with 9.3 SDK*
@@ -76,6 +78,8 @@ Available SDKs can be found at https://sdks.website/.
 
 *Skip dependency download*
 
+If you think you already have all the dependcies or you already ran the `install-deps` script.
+
 ````bash
 ./install --install-dependencies N
 ````
@@ -91,7 +95,7 @@ Available SDKs can be found at https://sdks.website/.
 
 ````
 
-## NEXT STEP
+## Next Step
 
 Add the following lines to your ~/.bash_profile or ~/.bashrc
 
@@ -102,17 +106,24 @@ export THEOS=~/theos
 export THEOS_DEVICE_IP=<ip of your device>
 export THEOS_DEVICE_PORT=22
 ````
-
 ## Tested Platforms
 * Windows 7 (Cygwin)
 * Windows 10 (Cygwin)
 * Linux Mint 17+
 * Ubuntu 14.04+
 
+## Additional Scripts
+There are 2 more scripts on the repo
+
+* `install-deps` : Install theos dependencies before installing theos. This is already built-in on the main `install` script though.
+* `get-sdk`: Download additional sdks if you already have theos installed.
+
+
 ## Todo
 
-* option to create $THEOS variable
-* iOS & OSX support
+* Test on Windows 10 Subsystem for Linux
+* iOS & macOS support
+* option to create $THEOS variable into ~/.bash_profile or ~/.bashrc
 
 ## Changelog
 
