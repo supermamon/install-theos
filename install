@@ -52,7 +52,7 @@ SDK_WEBSITE="https://sdks.website/dl"
 declare -a DEPS_HARD=(curl)
 declare -a DEPS_ALL=(wget git make perl python)
 declare -a DEPS_CYGWIN=(ca-certificates openssh)
-declare -a DEPS_LINUX=(ssh)
+declare -a DEPS_LINUX=(ssh plistutil)
 declare -a DEPS_DARWIN=(ca-certificates)
 
 # CURL Options: This is use to download apt-cyg on Cygwin systems

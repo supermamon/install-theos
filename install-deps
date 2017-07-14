@@ -3,7 +3,7 @@
 # install-deps v1.0.2
 # This script is used to install dependencies required by theos.
 # Changelog
-# v1.0.2 : Add suggenstions for package install errors
+# v1.0.2 : Add suggestions for package install errors
 # v1.0.1 : Fix curl options
 # v1.0.0 : First version
 
@@ -67,6 +67,8 @@ else
 fi
 #-------------------------------------------------------------------------------
 echo_title " [PRE-CHECK: apt-get installation]";
+# Assumes apt-get is installed on non-Cygwin platforms
+# Tries to download apt-cyg and symlink as apt-get
 if [ "$PLATFORM" ==  "Cygwin" ]; then
   if [ ! -e /bin/apt-cyg ]; then
     echo_info "Downloading apt-cyg..."

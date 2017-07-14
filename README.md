@@ -10,7 +10,7 @@
 
 ## Download & Run
 
-If you want to get to work quickly:
+If you want to get to work quickly open your bash terminal and run:
 ````bash
 curl -JOLks https://git.io/install-theos && bash install-theos
 ````

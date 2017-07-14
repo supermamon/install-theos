@@ -1,0 +1,35 @@
+
+THEOS_INSTALL_FOLDER=~/                       # -d | --installdir
+CREATE_NIC="N"                                # -n | --createnic
+NIC_USERNAME="My Name <myname@domain.com>"    # -u | --nicusername
+NIC_PREFIX="com.mycompany"                    # -p | --nicprefix
+INCLUDE_FALLBACK_HEADERS="N"                  # -f | --fallback
+REINSTALL="N"                                 # -r | --reinstall
+SKIP_PLATFORMCHECK="N"                        # -c | --no-platformcheck
+INSTALL_DEPENDENCIES="N"                      # -e | --install-dependencies
+declare -a SDKS=(9.2);                        # -s | --sdks
+
+
+while getopts "dnu:p:frces:" flag; do
+case "$flag" in
+  d) THEOS_INSTALL_FOLDER=$OPTARG;;
+  n) CREATE_NIC="Y";;
+  u) NIC_USERNAME=$OPTARG;;
+  p) NIC_PREFIX="$OPTARG";;
+  f) INCLUDE_FALLBACK_HEADERS="Y";;
+  r) REINSTALL="Y";;
+  c) SKIP_PLATFORMCHECK="Y";;
+  e) INSTALL_DEPENDENCIES="Y";;
+  s) SDKS=$OPTARG;;
+esac
+done
+
+echo "THEOS_INSTALL_FOLDER      : $THEOS_INSTALL_FOLDER";
+echo "CREATE_NIC                : $CREATE_NIC";
+echo "NIC_USERNAME              : $NIC_USERNAME";
+echo "NIC_PREFIX                : $NIC_PREFIX";
+echo "INCLUDE_FALLBACK_HEADERS  : $INCLUDE_FALLBACK_HEADERS";
+echo "REINSTALL                 : $REINSTALL";
+echo "SKIP_PLATFORMCHECK        : $SKIP_PLATFORMCHECK";
+echo "INSTALL_DEPENDENCIES      : $INSTALL_DEPENDENCIES";
+echo "SDKS                      : $SDKS";
